@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { useAppStore, Rule, ScheduleSettings } from "../store/useAppStore";
 import { invoke } from "@tauri-apps/api/core";
 import { save, open } from "@tauri-apps/plugin-dialog";
+import { nextDestination } from "../utils/rulePath";
 import About from "./About";
 import {
   Folder,
@@ -188,24 +189,11 @@ export default function Settings() {
   const handlePickRuleDestination = async () => {
     if (!editingRule) return;
     const selected = await open({ directory: true, multiple: false });
-    const selectedPath = Array.isArray(selected) ? selected[0] : selected;
-    if (!selectedPath) return;
-
-    const watchedFolder =
-      folders.find((folder) => folder.id === editingRule.folder_id) || folders[0];
-    let destination = selectedPath;
-    if (watchedFolder) {
-      const base = watchedFolder.path.replace(/\\/g, "/").replace(/\/$/, "");
-      const target = selectedPath.replace(/\\/g, "/").replace(/\/$/, "");
-      const windowsPath = watchedFolder.path.includes("\\");
-      const baseForComparison = windowsPath ? base.toLowerCase() : base;
-      const targetForComparison = windowsPath ? target.toLowerCase() : target;
-      if (targetForComparison === baseForComparison) {
-        destination = ".";
-      } else if (targetForComparison.startsWith(`${baseForComparison}/`)) {
-        destination = target.slice(base.length + 1);
-      }
-    }
+    const destination = nextDestination(
+      selected,
+      folders.map((folder) => folder.path)
+    );
+    if (destination === null) return;
     setEditingRule({ ...editingRule, destination });
   };
 
