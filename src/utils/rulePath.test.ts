@@ -41,12 +41,19 @@ describe("relativizeDestination", () => {
     ).toBe("Documents");
   });
 
-  it("matches case-insensitively when only the selected path looks like Windows", () => {
+  it("matches a forward-slash watched folder with a drive letter case-insensitively", () => {
     // A watched folder can be typed with forward slashes on Windows.
     expect(
       relativizeDestination("C:\\Users\\User\\Downloads\\Docs", [
         "c:/users/user/downloads",
       ])
+    ).toBe("Docs");
+  });
+
+  it("matches case-insensitively when only the selected path looks like Windows", () => {
+    // A forward-slash UNC share has neither a backslash nor a drive letter.
+    expect(
+      relativizeDestination("\\\\server\\share\\Docs", ["//SERVER/Share"])
     ).toBe("Docs");
   });
 
@@ -70,6 +77,15 @@ describe("relativizeDestination", () => {
         "/home/user/Downloads/Work",
       ])
     ).toBe("Invoices");
+  });
+
+  it("treats the filesystem root as a watched folder", () => {
+    expect(relativizeDestination("/", ["/"])).toBe(".");
+    expect(relativizeDestination("/home/user", ["/"])).toBe("home/user");
+    // A deeper watched folder still wins over the root.
+    expect(
+      relativizeDestination("/home/user/Downloads/Docs", ["/", ...POSIX])
+    ).toBe("Docs");
   });
 
   it("keeps the path absolute when there are no watched folders", () => {

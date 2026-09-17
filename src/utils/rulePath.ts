@@ -11,7 +11,10 @@
 const SEPARATORS = /[\\/]+/;
 
 function toComponents(path: string): string[] {
-  return path.split(SEPARATORS).filter((part) => part.length > 0);
+  const parts = path.split(SEPARATORS).filter((part) => part.length > 0);
+  // A leading separator is the root of an absolute path. Keep it as its own
+  // component so the filesystem root itself ("/") can be a watched folder.
+  return /^[\\/]/.test(path) ? ["/", ...parts] : parts;
 }
 
 /**
